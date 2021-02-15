@@ -1,0 +1,52 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import seaborn as sns
+#col_names=['h1n1_worry','h1n1_awareness','contact_avoidance','bought_face_mask','wash_hands_frequently']
+import pandas as pd
+
+df = pd.read_csv("h1n1_vaccine_prediction.csv")
+#df.head(50)
+df1 = df.dropna()
+print(df1.head(30))
+
+feature_cols=['h1n1_worry','h1n1_awareness','contact_avoidance','bought_face_mask','wash_hands_frequently']
+X=df1[feature_cols]
+Y=df1['h1n1_vaccine']
+
+from sklearn.model_selection import train_test_split
+X_train,X_test,Y_train,Y_test=train_test_split(X,Y,test_size=0.25,random_state=0)
+
+from sklearn.linear_model import LogisticRegression
+logreg=LogisticRegression()
+logreg.fit(X_train,Y_train)
+Y_pred=logreg.predict(X_test)
+
+from sklearn import metrics
+cnf_matrix=metrics.confusion_matrix(Y_test,Y_pred)
+print(cnf_matrix)
+
+class_names=[0,1]
+fig,ax=plt.subplots()
+tick_marks=np.arange(len(class_names))
+plt.xticks(tick_marks,class_names)
+plt.yticks(tick_marks,class_names)
+
+sns.heatmap(pd.DataFrame(cnf_matrix), annot=True, cmap="YlGnBu" ,fmt='g')
+ax.xaxis.set_label_position('top')
+
+plt.tight_layout()
+plt.title('Confusion matrix',y=1.1)
+plt.ylabel('Actual label')
+plt.xlabel('Predicted label')
+
+print('Accuracy:',metrics.accuracy_score(Y_test,Y_pred))
+print("Precision:",metrics.precision_score(Y_test,Y_pred))
+print('Recall:',metrics.recall_score(Y_test,Y_pred))
+
+Y_pred_proba=logreg.predict_proba(X_test)[::,-1]
+fpr,tpr,_ =metrics.roc_curve(Y_test,Y_pred_proba)
+auc=metrics.roc_auc_score(Y_test,Y_pred_proba)
+plt.plot(fpr,tpr,label='data 1,auc='+str(auc))
+plt.legend(loc=4)
+plt.show()
